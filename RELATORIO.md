@@ -1,59 +1,62 @@
-
-# 📄 RELATÓRIO FINAL: Análise de Churn da Telecom X
+# Relatório de Análise de Evasão de Clientes - TelecomX
 
 ## 1. Introdução
 
-O objetivo desta análise foi explorar um conjunto de dados de clientes da empresa fictícia **Telecom X** para entender os principais fatores que levam à evasão de clientes (churn). Compreender por que os clientes cancelam seus serviços é o primeiro passo para desenvolver estratégias eficazes de retenção, reduzir perdas de receita e melhorar a satisfação do cliente.
+Este relatório detalha o processo de análise de dados e construção de modelos de machine learning para prever a evasão de clientes (churn) na empresa TelecomX. O objetivo é identificar os principais fatores que levam à evasão e fornecer insights para estratégias de retenção.
 
-## 2. Limpeza e Tratamento de Dados
+## 2. Preparação dos Dados
 
-O processo de preparação dos dados foi crucial para garantir a qualidade da análise e envolveu as seguintes etapas:
+A preparação dos dados foi uma etapa crucial e envolveu os seguintes passos:
 
-- **Importação:** Os dados, originalmente em formato JSON aninhado, foram carregados e convertidos em um DataFrame tabular utilizando a biblioteca `pandas`.
-- **Tratamento de Inconsistências:** A coluna de faturamento total (`TotalCharges`) apresentava valores em branco para clientes novos. Esses valores foram tratados e a coluna convertida para o formato numérico.
-- **Engenharia de Features:** Criamos a coluna `Contas_Diarias` a partir da fatura mensal, dividindo por 30, permitindo uma análise mais granular do custo para o cliente.
-- **Padronização:** Valores textuais como `"Yes"` e `"No"` foram convertidos para 1 e 0. As colunas foram renomeadas para o português para facilitar a interpretação.
+- **Limpeza**: Foram removidos dados inconsistentes e valores ausentes nas colunas de cobrança (`account.Charges.Total`).
+- **Encoding**: Variáveis categóricas (como tipo de contrato, forma de pagamento, etc.) foram transformadas em formato numérico usando a técnica de *One-Hot Encoding* para serem compatíveis com os modelos.
+- **Verificação de Desbalanceamento**: Foi identificado um desbalanceamento na variável alvo (`Churn`), com uma proporção maior de clientes não evadidos.
+- **Balanceamento de Classes**: Para corrigir o desbalanceamento, aplicou-se a técnica **SMOTE** (*Synthetic Minority Over-sampling Technique*) apenas nos dados de treino. Isso evita que os modelos fiquem enviesados para a classe majoritária.
+- **Normalização**: As variáveis numéricas foram padronizadas (*StandardScaler*) para que tivessem média zero e desvio padrão um, garantindo que a escala não influenciasse os modelos baseados em distância, como a Regressão Logística.
 
-## 3. Análise Exploratória e Insights
+## 3. Modelagem e Avaliação
 
-### 3.1. Perfil Geral da Evasão
+Foram treinados e avaliados dois modelos distintos para prever a evasão:
 
-A taxa de evasão geral foi de **26,5%**. Isso significa que **mais de um quarto** dos clientes cancelaram os serviços — um número expressivo que exige atenção.
+1.  **Regressão Logística**: Um modelo linear, rápido e interpretável, ideal para problemas de classificação binária.
+2.  **Random Forest**: Um modelo de conjunto (*ensemble*) baseado em árvores de decisão, conhecido por sua alta performance e capacidade de medir a importância das variáveis.
 
-### 3.2. Fatores Contratuais
+Os dados foram divididos em **70% para treino** e **30% para teste**.
 
-- **Contrato Mês a Mês:** Apresenta a maior taxa de churn. A flexibilidade do plano facilita o cancelamento.
-- **Contratos de 1 ou 2 anos:** Clientes mais fiéis e com taxas de churn muito baixas.
+### Resultados da Avaliação
 
-### 3.3. Fatores de Custo e Serviço
+| Modelo                | Acurácia | Precisão (Churn=1) | Recall (Churn=1) | F1-Score (Churn=1) |
+| --------------------- | :------: | :----------------: | :--------------: | :----------------: |
+| **Regressão Logística** |  74.5%   |        51.0%       |      82.0%       |       63.0%        |
+| **Random Forest**       |  78.3%   |        60.0%       |      63.0%       |       61.0%        |
 
-- **Fatura Mensal Alta:** Clientes com valores elevados, especialmente usuários de fibra óptica, evadem com mais frequência.
-- **Suporte Técnico:** A ausência de suporte técnico está fortemente associada à evasão. Clientes sem suporte tendem a cancelar.
+*(Nota: os valores são aproximados e baseados na execução do script `TelecomX_Modelagem.py`)*
 
-### 3.4. Perfil do Cliente
+### Análise dos Modelos
 
-- **Tempo de Contrato (Tenure):** A evasão é mais comum entre clientes novos. A lealdade aumenta com o tempo.
-- **Outros Fatores:** Variáveis como gênero ou presença de parceiro(a) não influenciaram significativamente a evasão.
+- A **Regressão Logística** obteve um **Recall** muito alto, o que significa que foi excelente em identificar os clientes que de fato evadiram. No entanto, sua **Precisão** foi menor, indicando que classificou erroneamente alguns clientes não evadidos como evadidos (falsos positivos).
+- O **Random Forest** apresentou uma **Acurácia** geral superior e um bom equilíbrio entre Precisão e Recall. Ele foi mais preciso ao prever a evasão, embora tenha deixado de identificar alguns clientes que evadiram.
 
-## 4. Conclusões
+**Conclusão da Avaliação**: A escolha do melhor modelo depende do objetivo de negócio.
+- Se a prioridade é **não perder nenhum cliente que possa evadir** (mesmo que isso implique em ações de retenção para clientes que não iriam sair), a **Regressão Logística** é a melhor escolha devido ao seu alto Recall.
+- Se o objetivo é uma **abordagem mais equilibrada e com menos "alarmes falsos"**, o **Random Forest** é mais indicado.
 
-O cliente com maior risco de churn apresenta o seguinte perfil:
+## 4. Análise de Importância das Variáveis
 
-- **Cliente recente**
-- **Contrato mês a mês**
-- **Fatura alta (principalmente fibra óptica)**
-- **Sem suporte técnico ou serviços adicionais**
+A análise das variáveis mais influentes revelou os seguintes fatores como principais impulsionadores da evasão:
 
-## 5. Recomendações Estratégicas
+1.  **Tipo de Contrato (`account.Contract`)**: Clientes com contratos mensais (`Month-to-month`) têm uma propensão muito maior a evadir em comparação com contratos de 1 ou 2 anos.
+2.  **Serviço de Internet (`InternetService`)**: Clientes com serviço de `Fiber optic` mostraram maior tendência à evasão, possivelmente devido a problemas de custo, estabilidade ou concorrência.
+3.  **Total Gasto (`account.Charges.Total`)**: Valores totais mais baixos estão associados a uma maior chance de evasão, o que sugere que clientes mais novos ou com menos serviços são mais propensos a sair.
+4.  **Serviços de Suporte e Segurança**: A ausência de serviços como `OnlineSecurity` e `TechSupport` é um forte indicador de risco de evasão.
 
-### ✅ Incentivar Contratos de Longo Prazo
-Campanhas e promoções para migração de contratos mensais para anuais ou bienais, com descontos progressivos.
+## 5. Conclusão e Recomendações Estratégicas
 
-### ✅ Revisar a Oferta de Fibra Óptica
-Verificar a percepção de valor, qualidade do serviço e concorrência para justificar o custo elevado.
+Com base na análise, a evasão de clientes na TelecomX é fortemente influenciada por fatores contratuais, tipo de serviço de internet e a falta de serviços de valor agregado, como suporte técnico.
 
-### ✅ Fortalecer o Onboarding
-Criar programas de boas-vindas com suporte proativo nos primeiros 3 a 6 meses.
+**Recomendações**:
 
-### ✅ Agregar Serviços de Suporte
-Oferecer suporte técnico e proteção de dispositivos como diferencial competitivo nos planos.
+- **Fidelização Contratual**: Criar campanhas e ofertas para incentivar os clientes com contrato mensal a migrarem para planos de 1 ou 2 anos, oferecendo descontos ou benefícios.
+- **Melhoria do Serviço de Fibra Óptica**: Investigar a causa da alta evasão entre clientes de fibra. Pode ser uma questão de preço, qualidade do serviço ou suporte. Uma pesquisa de satisfação focada nesse grupo seria valiosa.
+- **Cross-selling de Serviços de Proteção**: Oferecer pacotes promocionais de `OnlineSecurity` e `TechSupport` para clientes que não possuem esses serviços, destacando os benefícios de segurança e conveniência.
+- **Ações Proativas de Retenção**: Utilizar o modelo de Regressão Logística para gerar uma lista de clientes com alta probabilidade de evasão (alto Recall) e direcionar a eles ações de retenção personalizadas, como descontos ou upgrades.
